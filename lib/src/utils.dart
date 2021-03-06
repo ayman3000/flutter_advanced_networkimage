@@ -1,10 +1,10 @@
-import 'dart:io';
 import 'dart:async';
+import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:http/http.dart' as http;
 import 'package:flutter/widgets.dart';
+import 'package:http/http.dart' as http;
 
 /// Calculate crc32 checksum
 ///
@@ -318,20 +318,15 @@ Future<Uint8List> loadFromRemote(
   skipRetryStatusCode ??= [];
 
   /// Retry mechanism.
-  Future<http.Response> run<T>(Future f(), int retryLimit,
-      Duration retryDuration, double retryDurationFactor) async {
+  Future<http.Response> run<T>(Future f(), int retryLimit, Duration retryDuration, double retryDurationFactor) async {
     for (int t in List.generate(retryLimit + 1, (int t) => t + 1)) {
       try {
         http.Response res = await f();
         if (res != null) {
-          if ([HttpStatus.ok, HttpStatus.partialContent]
-                  .contains(res.statusCode) &&
-              res.bodyBytes.length > 0) {
+          if ([HttpStatus.ok, HttpStatus.partialContent].contains(res.statusCode) && res.bodyBytes.length > 0) {
             return res;
           } else {
-            if (printError)
-              debugPrint(
-                  'Failed to load, response status code: ${res.statusCode.toString()}.');
+            if (printError) debugPrint('Failed to load, response status code: ${res.statusCode.toString()}.');
             if (skipRetryStatusCode.contains(res.statusCode)) return null;
           }
         }
@@ -358,13 +353,11 @@ Future<Uint8List> loadFromRemote(
       client ??= http.Client();
       final _req = http.Request('GET', Uri.parse(_url));
       if (header != null) _req.headers.addAll(header);
-      if (!acceptRangesHeader && bufferPosition != 0)
-        _req.headers[HttpHeaders.rangeHeader] = 'bytes=$bufferPosition-';
+      if (!acceptRangesHeader && bufferPosition != 0) _req.headers[HttpHeaders.rangeHeader] = 'bytes=$bufferPosition-';
 
       final _res = await client.send(_req).timeout(timeoutDuration);
       acceptRangesHeader =
-          _res.headers.containsKey(HttpHeaders.acceptRangesHeader) &&
-              _res.headers[HttpHeaders.acceptRangesHeader] == 'bytes';
+          _res.headers.containsKey(HttpHeaders.acceptRangesHeader) && _res.headers[HttpHeaders.acceptRangesHeader] == 'bytes';
 
       if (!acceptRangesHeader && buffer != null) {
         bufferPosition = 0;
@@ -378,10 +371,7 @@ Future<Uint8List> loadFromRemote(
       _res.stream.listen(
         (bytes) {
           if (buffer == null)
-            buffer = Uint8List(
-                (_res.contentLength != null && _res.contentLength != 0)
-                    ? _res.contentLength
-                    : 1048576);
+            buffer = Uint8List((_res.contentLength != null && _res.contentLength != 0) ? _res.contentLength : 1048576);
 
           if (buffer.length < bufferPosition + bytes.length) {
             // Increase buffer size by 512kb if the received bytes don't fit into the buffer
@@ -398,8 +388,7 @@ Future<Uint8List> loadFromRemote(
             final double progress = bufferPosition / _res.contentLength;
             if (_progress == null || (progress - _progress).abs() >= 0.01) {
               // Trigger loading progress callback every percent change
-              loadingProgress(
-                  progress, Uint8List.view(buffer.buffer, 0, bufferPosition));
+              loadingProgress(progress, Uint8List.view(buffer.buffer, 0, bufferPosition));
               _progress = progress;
             }
           }
@@ -409,9 +398,7 @@ Future<Uint8List> loadFromRemote(
           if (buffer == null) {
             resultData = Uint8List(0);
           } else {
-            resultData = (buffer.length == bufferPosition)
-                ? buffer
-                : Uint8List.view(buffer.buffer, 0, bufferPosition);
+            resultData = (buffer.length == bufferPosition) ? buffer : Uint8List.view(buffer.buffer, 0, bufferPosition);
           }
 
           completer.complete(http.Response.bytes(
@@ -434,7 +421,7 @@ Future<Uint8List> loadFromRemote(
 
       return completer.future;
     } else {
-      return await http.get(_url, headers: header).timeout(timeoutDuration);
+      return await http.get(Uri(path: _url), headers: header).timeout(timeoutDuration);
     }
   }, retryLimit, retryDuration, retryDurationFactor);
   if (_response != null) return _response.bodyBytes;
